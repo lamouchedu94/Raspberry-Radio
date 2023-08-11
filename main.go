@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -20,7 +21,7 @@ func main() {
 
 	go func() {
 		<-signalChannel
-		fmt.Println("\nCtrl+C received. Gracefully shutting down...")
+		fmt.Println("\nCtrl+C received. shutting down...")
 		cancel() // Cancel the context when Ctrl+C is received
 		os.Exit(1)
 	}()
@@ -34,16 +35,16 @@ func main() {
 func run(ctx context.Context) error {
 
 	var err error
-	freq := 90400
-	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 171k -g 30 -F 9 -f %dK", freq)
+	freq := 105500 // 87800 //96000 //90400 //
+	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f %dK", freq)
 	cmd_radio := exec.CommandContext(ctx, "bash", "-c", command_radio)
 
-	command_audio := "play -v 0.05 -r 171k -t raw -e s -b 16 -c 1 -V1 - lowpass 16k"
+	command_audio := "play -v 0.05 -r 180k -t raw -e s -b 16 -c 1 -V1 - lowpass 16k"
 	cmd_audio := exec.CommandContext(ctx, "bash", "-c", command_audio)
 
 	// cmd_RDS := exec.CommandContext(ctx, "hexdump", "-C")
 	//cmd_RDS := exec.Command("redsea")
-	cmd_RDS := exec.Command("bash", "-c", "redsea --show-partial | grep partial_ps")
+	cmd_RDS := exec.Command("bash", "-c", "redsea --show-partial -r 180k") // --show-partial
 
 	r_rds, w_rds := io.Pipe()
 	r_audio, w_audio := io.Pipe()
@@ -79,7 +80,58 @@ func rds(cmd_RDS *exec.Cmd) {
 
 	err := cmd_RDS.Start()
 	fmt.Println("RDS Started:", err)
+	var msg map[string]any
 
-	io.Copy(os.Stdout, out)
+	// var station [8]byte
 
+	dec := json.NewDecoder(out)
+	for {
+		err := dec.Decode(&msg)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		showValue(msg, "ps")
+		showValue(msg, "radiotext")
+		showMessage(msg)
+		// if msg["ps"] != nil {
+		// 	fmt.Println("ps ", msg["ps"])
+		// }
+		// if msg["partial_ps"] != nil {
+		// 	fmt.Println("partial_ps ", msg["partial_ps"])
+		// }
+		// fmt.Printf("%v\n", msg)
+		// fmt.Printf("%v\n", msg["partial_ps"])
+		fmt.Println("-----------------------------------------")
+	}
+
+	// io.Copy(os.Stdout, out)
+
+}
+
+func showValue(msg map[string]any, key string) {
+	if msg[key] != nil {
+		fmt.Println(msg[key])
+	} else if msg["partial_"+key] != nil {
+		fmt.Println(msg["partial_"+key])
+	}
+}
+
+func showMessage(msg map[string]any) {
+	if msg == nil {
+		return
+	}
+	for k, v := range msg {
+		switch v := v.(type) {
+		case string:
+			fmt.Println(k, ":", v)
+		case map[string]any:
+			showMessage(v)
+		default:
+			fmt.Printf("%s: %v\n", k, v)
+		}
+	}
 }
