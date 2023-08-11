@@ -7,29 +7,55 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"os/signal"
 	"time"
 )
 
 func main() {
-	// Create a context with cancel function to gracefully handle Ctrl+C events
+	pythonInterface()
+	/*
+		// Create a context with cancel function to gracefully handle Ctrl+C events
 
-	ctx, cancel := context.WithCancel(context.Background())
-	// Handle Ctrl+C signal (SIGINT)
-	signalChannel := make(chan os.Signal, 1)
-	signal.Notify(signalChannel, os.Interrupt)
+		ctx, cancel := context.WithCancel(context.Background())
+		// Handle Ctrl+C signal (SIGINT)
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, os.Interrupt)
+
+		go func() {
+			<-signalChannel
+			fmt.Println("\nCtrl+C received. shutting down...")
+			cancel() // Cancel the context when Ctrl+C is received
+			os.Exit(1)
+		}()
+
+		err := run(ctx)
+		if err != nil {
+			fmt.Println(err)
+		}
+	*/
+}
+
+func pythonInterface() error {
+	cmd_python := exec.Command("python3", "InputAndScreen.py")
+
+	pipeIn, _ := cmd_python.StdinPipe()
+	pipeOut, _ := cmd_python.StdoutPipe()
+
+	err := cmd_python.Start()
+	if err != nil {
+		return err
+
+	}
 
 	go func() {
-		<-signalChannel
-		fmt.Println("\nCtrl+C received. shutting down...")
-		cancel() // Cancel the context when Ctrl+C is received
-		os.Exit(1)
+		for i := 0; i < 10; i++ {
+			data := fmt.Sprintf("%d\n", i)
+			pipeIn.Write([]byte(data))
+		}
+		pipeIn.Close()
 	}()
-
-	err := run(ctx)
-	if err != nil {
-		fmt.Println(err)
-	}
+	io.Copy(os.Stdout, pipeOut)
+	cmd_python.Wait()
+	return nil
 }
 
 func run(ctx context.Context) error {
