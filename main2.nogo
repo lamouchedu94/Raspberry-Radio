@@ -34,8 +34,6 @@ func main() {
 	wg.Add(3)
 	go rds(cmd_RDS)
 
-	cmd_comp := exec.Command("bash", "-c", "rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f 90400K | redsea --show-partial -e | jq '.partial_ps | play -v 0.1 -r 180k -t raw -e s -b 16 -c 1 -V1 - lowpass 16k ")
-
 	for true {
 		fmt.Println(cmd_RDS.Stdout)
 		if cmd_RDS.Stdout != nil {
