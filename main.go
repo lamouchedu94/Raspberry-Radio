@@ -1,71 +1,85 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
-	"sync"
+	"os/signal"
+	"time"
 )
 
 func main() {
-	var wg sync.WaitGroup
-	//var radio_output bytes.Buffer
-	freq := 96000
+	// Create a context with cancel function to gracefully handle Ctrl+C events
 
+	ctx, cancel := context.WithCancel(context.Background())
+	// Handle Ctrl+C signal (SIGINT)
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt)
+
+	go func() {
+		<-signalChannel
+		fmt.Println("\nCtrl+C received. Gracefully shutting down...")
+		cancel() // Cancel the context when Ctrl+C is received
+		os.Exit(1)
+	}()
+
+	err := run(ctx)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func run(ctx context.Context) error {
+
+	var err error
+	freq := 90400
 	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 171k -g 30 -F 9 -f %dK", freq)
-	cmd_radio := exec.Command("bash", "-c", command_radio)
+	cmd_radio := exec.CommandContext(ctx, "bash", "-c", command_radio)
 
-	r, _ := cmd_radio.StdoutPipe()
+	command_audio := "play -v 0.05 -r 171k -t raw -e s -b 16 -c 1 -V1 - lowpass 16k"
+	cmd_audio := exec.CommandContext(ctx, "bash", "-c", command_audio)
 
-	var w io.Writer
-	tee := io.TeeReader(r, w)
+	// cmd_RDS := exec.CommandContext(ctx, "hexdump", "-C")
+	//cmd_RDS := exec.Command("redsea")
+	cmd_RDS := exec.Command("bash", "-c", "redsea --show-partial | grep partial_ps")
 
-	wg.Add(1)
-	go flux_radio(cmd_radio)
+	r_rds, w_rds := io.Pipe()
+	r_audio, w_audio := io.Pipe()
 
-	command_audio := "play -v 0.1 -r 171k -t raw -e s -b 16 -c 1 -V1 - lowpass 16k"
-	cmd_audio := exec.Command("bash", "-c", command_audio)
-	cmd_audio.Stdin = r
-	wg.Add(2)
-	go audio(cmd_audio)
+	mw := io.MultiWriter(w_rds, w_audio)
 
-	cmd_RDS := exec.Command("bash", "-c", "redsea --show-partial | jq '.partial_ps'")
-	cmd_RDS.Stdin = tee
-	wg.Add(3)
+	cmd_RDS.Stdin = r_rds
+	cmd_audio.Stdin = r_audio
+	cmd_audio.Stdout = io.Discard
+
+	cmd_radio.Stdout = mw
+
+	if err != nil {
+		return err
+	}
+	go func() {
+		time.Sleep(1 * time.Second)
+		fmt.Println("Run audio", cmd_audio.Run())
+	}()
+
 	go rds(cmd_RDS)
 
-	for true {
-		fmt.Println(cmd_RDS.Stdout)
-		if cmd_RDS.Stdout != nil {
-			fmt.Println(cmd_RDS.Stdout)
-		}
+	time.Sleep(1 * time.Second)
+	fmt.Println("start radio", cmd_radio.Start())
 
-	}
-
-	wg.Wait()
-
+	fmt.Println("wait radio", cmd_radio.Wait())
+	return nil
 }
 
 func rds(cmd_RDS *exec.Cmd) {
-	err := cmd_RDS.Run()
-	if err != nil {
-		fmt.Print(err)
-		return
-	}
-}
 
-func audio(cmd_audio *exec.Cmd) {
-	err := cmd_audio.Run()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-}
+	out, _ := cmd_RDS.StdoutPipe()
 
-func flux_radio(cmd *exec.Cmd) {
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	err := cmd_RDS.Start()
+	fmt.Println("RDS Started:", err)
+
+	io.Copy(os.Stdout, out)
+
 }
