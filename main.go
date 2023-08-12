@@ -11,7 +11,14 @@ import (
 	"time"
 )
 
+type info struct {
+	stationName string
+	stationFreq int
+	stationText any
+}
+
 func main() {
+	i := info{}
 	// Create a context with cancel function to gracefully handle Ctrl+C events
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -26,14 +33,14 @@ func main() {
 		os.Exit(1)
 	}()
 
-	err := run(ctx)
+	err := i.run(ctx)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 }
 
-func pythonInterface(cmd_python *exec.Cmd, freq int) error {
+func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 	pipeIn, _ := cmd_python.StdinPipe()
 	pipeOut, _ := cmd_python.StdoutPipe()
 
@@ -45,9 +52,11 @@ func pythonInterface(cmd_python *exec.Cmd, freq int) error {
 
 	go func() {
 		for {
-			data := fmt.Sprintf("%d\n", freq)
+			data := fmt.Sprintf("freq %d\n", i.stationFreq)
 			pipeIn.Write([]byte(data))
-			time.Sleep(time.Second)
+			data = fmt.Sprintf("name %s\n", i.stationName)
+			pipeIn.Write([]byte(data))
+			fmt.Println("je suis ici")
 		}
 
 	}()
@@ -56,11 +65,12 @@ func pythonInterface(cmd_python *exec.Cmd, freq int) error {
 	return nil
 }
 
-func run(ctx context.Context) error {
+func (i *info) run(ctx context.Context) error {
 
 	var err error
-	freq := 105500 // 87800 //96000 //90400 //
-	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f %dK", freq)
+	i.stationFreq = 105500 // 87800 //96000 //90400 //
+
+	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f %dK", i.stationFreq)
 	cmd_radio := exec.CommandContext(ctx, "bash", "-c", command_radio)
 
 	command_audio := "play -v 0.05 -r 180k -t raw -e s -b 16 -c 1 -V1 - lowpass 16k"
@@ -91,8 +101,8 @@ func run(ctx context.Context) error {
 		fmt.Println("Run audio", cmd_audio.Run())
 	}()
 
-	go rds(cmd_RDS)
-	go pythonInterface(cmd_python, freq)
+	go i.rds(cmd_RDS)
+	go i.pythonInterface(cmd_python)
 	time.Sleep(1 * time.Second)
 	fmt.Println("start radio", cmd_radio.Start())
 
@@ -100,7 +110,7 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func rds(cmd_RDS *exec.Cmd) {
+func (i *info) rds(cmd_RDS *exec.Cmd) {
 
 	out, _ := cmd_RDS.StdoutPipe()
 
@@ -119,10 +129,12 @@ func rds(cmd_RDS *exec.Cmd) {
 		if err != nil {
 			fmt.Println(err)
 		}
+		//showValue(msg, "ps")
+		//showValue(msg, "radiotext")
 
-		showValue(msg, "ps")
-		showValue(msg, "radiotext")
-		showMessage(msg)
+		i.stationName = fmt.Sprintf("%s", msg["ps"])
+
+		//showMessage(msg)
 		// if msg["ps"] != nil {
 		// 	fmt.Println("ps ", msg["ps"])
 		// }
@@ -131,7 +143,7 @@ func rds(cmd_RDS *exec.Cmd) {
 		// }
 		// fmt.Printf("%v\n", msg)
 		// fmt.Printf("%v\n", msg["partial_ps"])
-		fmt.Println("-----------------------------------------")
+		//fmt.Println("-----------------------------------------")
 	}
 
 	// io.Copy(os.Stdout, out)

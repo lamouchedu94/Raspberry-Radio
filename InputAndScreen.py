@@ -50,10 +50,12 @@ def screenOff() :
     disp.display()
 
 for line in sys.stdin:
-    draw.rectangle((0,0,width,height), outline=0, fill = 0 )    
-    draw.text((x,top), "Fréquence :", font = font, fill = 100)
-    
-    draw.text((x,top+8), str(line.strip()) + " Khz", font = font, fill = 100)
+    draw.rectangle((0,0,width,height), outline=0, fill = 0 ) 
+    if line[0:4] == "freq" :
+       draw.text((x,top), "Fréquence :", font = font, fill = 100)
+       draw.text((x,top+8), str(line[4:].strip()) + " Khz", font = font, fill = 100)
+    if line[0:4] == "name" :
+        draw.text((x,top+16), str(line[4:].strip()), font = font, fill = 100)
     disp.image(image)
     disp.display()
     print(line)
