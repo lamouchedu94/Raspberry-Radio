@@ -8,7 +8,7 @@ from PIL import ImageFont
 import time, os, subprocess
 
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
-
+import threading
 
 
 
@@ -52,15 +52,16 @@ def screenOff() :
     disp.image(image)
     disp.display()
 
-def screen():
+def screen(freq, name):
+    
     draw.rectangle((0,0,width,height), outline=0, fill = 0 ) 
-    if line[0:4] == "freq" :
-       draw.text((x,top), "Fréquence :", font = font, fill = 100)
-       draw.text((x,top+8), str(line[4:].strip()) + " Khz", font = font, fill = 100)
-    if line[0:4] == "name" :
-        draw.text((x,top+16), str(line[4:].strip()), font = font, fill = 100)
+    draw.text((x,top), "Fréquence :", font = font, fill = 100)
+    draw.text((x,top+8), freq, font = font, fill = 100)
+    draw.text((x,top+16), name, font = font, fill = 100)
+    
     disp.image(image)
     disp.display()
+        
 
 def parametre(string):
     if string[0:4] == "freq" :
@@ -73,12 +74,15 @@ def parametre(string):
 for line in sys.stdin:
     
     if line[0:4] == "freq" :
-        FREQ = line[5:10] + " Khz"
+        freq = line[5:10] + " Khz"
     
     if line[0:4] == "name" :
-        NAME = line[5:13]
-    print(FREQ, NAME)
+        name = line[5:13]
+    #screen(freq, name)
+    print(freq, name)
     sys.stdout.flush()
     
+
+
 
 screenOff()
