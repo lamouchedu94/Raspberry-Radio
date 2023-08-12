@@ -73,6 +73,16 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 		}
 
 	}()
+
+	// var stdoutBuf bytes.Buffer
+
+	// w := io.MultiWriter(os.Stdout, &stdoutBuf)
+	// cmd_python.Stdout = w
+	// go func() {
+	// 	fmt.Println(stdoutBuf.String())
+	// 	stdoutBuf.Reset()
+	// }()
+
 	io.Copy(os.Stdout, pipeOut)
 
 	cmd_python.Wait()
@@ -82,7 +92,7 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 func (i *info) run(ctx context.Context) error {
 
 	var err error
-	i.stationFreq = 104700 // 105500 // 96000 // 87800 //90400 //
+	i.stationFreq = 105500 // 904000 // 104700 //  96000 // 87800 //
 
 	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f %dK", i.stationFreq)
 	cmd_radio := exec.CommandContext(ctx, "bash", "-c", command_radio)

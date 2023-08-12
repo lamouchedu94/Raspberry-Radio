@@ -63,14 +63,26 @@ def screen(dico):
     disp.image(image)
     disp.display()
 
-        
+
+
+def button() :
+    while True :
+        if GPIO.input(15) == GPIO.HIGH :
+            print("stop")
+        if GPIO.input(14) == GPIO.HIGH :
+            print("freq:+100")
+        if GPIO.input(18) == GPIO.HIGH :
+            print("freq:-100")
 
 dico_info = {"freq":"", "name":""}
 
 thread_screen = threading.Thread(target=screen, args=(dico_info))
 #thread_screen.start()
+
+thread_button = threading.Thread(target=button)
+thread_button.start()
 for line in sys.stdin:
-    
+    print("ici")
     if line[0:4] == "freq" : 
         dico_info["freq"] = line[5:11] + " Khz"
     
@@ -79,11 +91,11 @@ for line in sys.stdin:
             car = line[len(line)-2]
             dico_info["name"] = line[5:]
 
-    if GPIO.input(15) == GPIO.HIGH :
-        print("stop")
+    
 
     screen(dico_info)
-    #print(dico_info)
+    print(dico_info)
+    
     sys.stdout.flush()
 
 
