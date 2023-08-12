@@ -41,6 +41,7 @@ func main() {
 }
 
 func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
+
 	pipeIn, _ := cmd_python.StdinPipe()
 	pipeOut, _ := cmd_python.StdoutPipe()
 
@@ -72,8 +73,8 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 		}
 
 	}()
-
 	io.Copy(os.Stdout, pipeOut)
+
 	cmd_python.Wait()
 	return nil
 }

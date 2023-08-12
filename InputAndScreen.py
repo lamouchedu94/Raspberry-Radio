@@ -39,8 +39,11 @@ font = ImageFont.load_default()
 i=0 
 p = 1
 
-NAME = ""
-FREQ = ""
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM) # Use physical pin numbering
+GPIO.setup(14, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # + 
+GPIO.setup(15, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Stop
+GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # -
 
 def screenOff() :
 
@@ -75,11 +78,13 @@ for line in sys.stdin:
         if len(line) >= 6 :
             car = line[len(line)-2]
             dico_info["name"] = line[5:]
-            
+
+    if GPIO.input(15) == GPIO.HIGH :
+        print("stop")
+
     screen(dico_info)
-    print(dico_info)
+    #print(dico_info)
     sys.stdout.flush()
-    
 
 
 
