@@ -33,7 +33,7 @@ func main() {
 
 }
 
-func pythonInterface(cmd_python *exec.Cmd, freq int, rds) error {
+func pythonInterface(cmd_python *exec.Cmd, freq int) error {
 	pipeIn, _ := cmd_python.StdinPipe()
 	pipeOut, _ := cmd_python.StdoutPipe()
 
