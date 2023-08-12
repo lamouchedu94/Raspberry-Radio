@@ -72,9 +72,12 @@ def parametre(string):
 
 for line in sys.stdin:
     
-    time.sleep(0.5)
     if line[0:4] == "freq" :
-        print("ok")
+        FREQ = line[5:10] + " Khz"
+    
+    if line[0:4] == "name" :
+        NAME = line[5:13]
+    print(FREQ, NAME)
     sys.stdout.flush()
     
 
