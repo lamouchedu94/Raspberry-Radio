@@ -39,15 +39,24 @@ font = ImageFont.load_default()
 i=0 
 p = 1
 
+def screenOff() :
 
-
-for line in sys.stdin:
-    draw.rectangle((0,0,width,height), outline=0, fill = 0 )
-    result = int(line) + 1
-    
-
-    draw.text((x,top), str(line), font = font, fill = 100)
+    draw.rectangle((0,0,width,height), outline=0, fill = 255 )
     disp.image(image)
     disp.display()
-    print(result)
+    time.sleep(1)
+    draw.rectangle((0,0,width,height), outline=0, fill = 0 )
+    disp.image(image)
+    disp.display()
+
+for line in sys.stdin:
+    draw.rectangle((0,0,width,height), outline=0, fill = 0 )    
+    draw.text((x,top), "Fréquence :", font = font, fill = 100)
+    
+    draw.text((x,top+8), str(line.strip()) + " Khz", font = font, fill = 100)
+    disp.image(image)
+    disp.display()
+    print(line)
     sys.stdout.flush()
+
+screenOff()

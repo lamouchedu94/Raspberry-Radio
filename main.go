@@ -7,36 +7,33 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"time"
 )
 
 func main() {
-	pythonInterface()
-	/*
-		// Create a context with cancel function to gracefully handle Ctrl+C events
+	// Create a context with cancel function to gracefully handle Ctrl+C events
 
-		ctx, cancel := context.WithCancel(context.Background())
-		// Handle Ctrl+C signal (SIGINT)
-		signalChannel := make(chan os.Signal, 1)
-		signal.Notify(signalChannel, os.Interrupt)
+	ctx, cancel := context.WithCancel(context.Background())
+	// Handle Ctrl+C signal (SIGINT)
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt)
 
-		go func() {
-			<-signalChannel
-			fmt.Println("\nCtrl+C received. shutting down...")
-			cancel() // Cancel the context when Ctrl+C is received
-			os.Exit(1)
-		}()
+	go func() {
+		<-signalChannel
+		fmt.Println("\nCtrl+C received. shutting down...")
+		cancel() // Cancel the context when Ctrl+C is received
+		os.Exit(1)
+	}()
 
-		err := run(ctx)
-		if err != nil {
-			fmt.Println(err)
-		}
-	*/
+	err := run(ctx)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 }
 
-func pythonInterface() error {
-	cmd_python := exec.Command("python3", "InputAndScreen.py")
-
+func pythonInterface(cmd_python *exec.Cmd, freq int, rds) error {
 	pipeIn, _ := cmd_python.StdinPipe()
 	pipeOut, _ := cmd_python.StdoutPipe()
 
@@ -47,11 +44,12 @@ func pythonInterface() error {
 	}
 
 	go func() {
-		for i := 0; i < 10; i++ {
-			data := fmt.Sprintf("%d\n", i)
+		for {
+			data := fmt.Sprintf("%d\n", freq)
 			pipeIn.Write([]byte(data))
+			time.Sleep(time.Second)
 		}
-		pipeIn.Close()
+
 	}()
 	io.Copy(os.Stdout, pipeOut)
 	cmd_python.Wait()
@@ -71,6 +69,8 @@ func run(ctx context.Context) error {
 	// cmd_RDS := exec.CommandContext(ctx, "hexdump", "-C")
 	//cmd_RDS := exec.Command("redsea")
 	cmd_RDS := exec.Command("bash", "-c", "redsea --show-partial -r 180k") // --show-partial
+
+	cmd_python := exec.Command("python3", "InputAndScreen.py")
 
 	r_rds, w_rds := io.Pipe()
 	r_audio, w_audio := io.Pipe()
@@ -92,7 +92,7 @@ func run(ctx context.Context) error {
 	}()
 
 	go rds(cmd_RDS)
-
+	go pythonInterface(cmd_python, freq)
 	time.Sleep(1 * time.Second)
 	fmt.Println("start radio", cmd_radio.Start())
 
