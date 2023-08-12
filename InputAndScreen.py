@@ -69,10 +69,11 @@ thread_screen = threading.Thread(target=screen, args=(dico_info))
 for line in sys.stdin:
     
     if line[0:4] == "freq" : 
-        dico_info["freq"] = line[5:10] + " Khz"
+        dico_info["freq"] = line[5:11] + " Khz"
     
     if line[0:4] == "name" : 
         if len(line) >= 6 :
+            car = line[len(line)-2]
             dico_info["name"] = line[5:]
             
     screen(dico_info)
