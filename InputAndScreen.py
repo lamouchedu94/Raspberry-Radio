@@ -39,6 +39,9 @@ font = ImageFont.load_default()
 i=0 
 p = 1
 
+NAME = ""
+FREQ = ""
+
 def screenOff() :
 
     draw.rectangle((0,0,width,height), outline=0, fill = 255 )
@@ -49,7 +52,7 @@ def screenOff() :
     disp.image(image)
     disp.display()
 
-for line in sys.stdin:
+def screen():
     draw.rectangle((0,0,width,height), outline=0, fill = 0 ) 
     if line[0:4] == "freq" :
        draw.text((x,top), "Fréquence :", font = font, fill = 100)
@@ -58,7 +61,21 @@ for line in sys.stdin:
         draw.text((x,top+16), str(line[4:].strip()), font = font, fill = 100)
     disp.image(image)
     disp.display()
-    print(line)
+
+def parametre(string):
+    if string[0:4] == "freq" :
+        #pass
+        print(string[4:].strip + " Khz")
+    if string[0:4] == "name" :
+        pass
+        #NAME = string[4:].strip
+
+for line in sys.stdin:
+    
+    time.sleep(0.5)
+    if line[0:4] == "freq" :
+        print("ok")
     sys.stdout.flush()
+    
 
 screenOff()

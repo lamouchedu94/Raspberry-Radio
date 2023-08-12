@@ -56,7 +56,7 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 			pipeIn.Write([]byte(data))
 			data = fmt.Sprintf("name %s\n", i.stationName)
 			pipeIn.Write([]byte(data))
-			fmt.Println("je suis ici")
+
 		}
 
 	}()
