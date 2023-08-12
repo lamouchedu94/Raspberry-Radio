@@ -51,15 +51,28 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 	}
 
 	go func() {
+		old_name := i.stationName
+		old_freq := i.stationFreq
+		data := fmt.Sprintf("freq %d\n", i.stationFreq)
+		pipeIn.Write([]byte(data))
+		data = fmt.Sprintf("name %s\n", i.stationName)
+		pipeIn.Write([]byte(data))
 		for {
-			data := fmt.Sprintf("freq %d\n", i.stationFreq)
-			pipeIn.Write([]byte(data))
-			data = fmt.Sprintf("name %s\n", i.stationName)
-			pipeIn.Write([]byte(data))
+			if old_freq != i.stationFreq {
+				data := fmt.Sprintf("freq %d\n", i.stationFreq)
+				pipeIn.Write([]byte(data))
+				old_freq = i.stationFreq
+			}
+			if old_name != i.stationName && i.stationName != "\n" {
+				data := fmt.Sprintf("name %s\n", i.stationName)
+				pipeIn.Write([]byte(data))
+				old_name = i.stationName
+			}
 
 		}
 
 	}()
+
 	io.Copy(os.Stdout, pipeOut)
 	cmd_python.Wait()
 	return nil
@@ -68,7 +81,7 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 func (i *info) run(ctx context.Context) error {
 
 	var err error
-	i.stationFreq = 96000 //105500 // 87800 //90400 //
+	i.stationFreq = 104700 // 105500 // 96000 // 87800 //90400 //
 
 	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f %dK", i.stationFreq)
 	cmd_radio := exec.CommandContext(ctx, "bash", "-c", command_radio)
@@ -131,8 +144,11 @@ func (i *info) rds(cmd_RDS *exec.Cmd) {
 		}
 		//showValue(msg, "ps")
 		//showValue(msg, "radiotext")
-
-		i.stationName = fmt.Sprintf("%s", msg["ps"])
+		if msg["ps"] != nil {
+			i.stationName = fmt.Sprintf("%s", msg["ps"])
+		} else if msg["partial_ps"] != nil {
+			i.stationName = fmt.Sprintf("%s", msg["partial_ps"])
+		}
 
 		//showMessage(msg)
 		// if msg["ps"] != nil {

@@ -52,34 +52,31 @@ def screenOff() :
     disp.image(image)
     disp.display()
 
-def screen(freq, name):
-    
+def screen(dico):
     draw.rectangle((0,0,width,height), outline=0, fill = 0 ) 
     draw.text((x,top), "Fréquence :", font = font, fill = 100)
-    draw.text((x,top+8), freq, font = font, fill = 100)
-    draw.text((x,top+16), name, font = font, fill = 100)
-    
+    draw.text((x,top+8), dico["freq"], font = font, fill = 100)
+    draw.text((x,top+16), dico["name"], font = font, fill = 100)
     disp.image(image)
     disp.display()
+
         
 
-def parametre(string):
-    if string[0:4] == "freq" :
-        #pass
-        print(string[4:].strip + " Khz")
-    if string[0:4] == "name" :
-        pass
-        #NAME = string[4:].strip
+dico_info = {"freq":"", "name":""}
 
+thread_screen = threading.Thread(target=screen, args=(dico_info))
+#thread_screen.start()
 for line in sys.stdin:
     
-    if line[0:4] == "freq" :
-        freq = line[5:10] + " Khz"
+    if line[0:4] == "freq" : 
+        dico_info["freq"] = line[5:10] + " Khz"
     
-    if line[0:4] == "name" :
-        name = line[5:13]
-    #screen(freq, name)
-    print(freq, name)
+    if line[0:4] == "name" : 
+        if len(line) >= 6 :
+            dico_info["name"] = line[5:]
+            
+    screen(dico_info)
+    print(dico_info)
     sys.stdout.flush()
     
 
