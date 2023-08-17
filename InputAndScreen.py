@@ -83,8 +83,8 @@ thread_button = threading.Thread(target=button)
 thread_button.start()
 for line in sys.stdin:
     print("ici")
-    if line[0:4] == "freq" : 
-        dico_info["freq"] = line[5:11] + " Khz"
+    if line[0:4] == "freq" :  
+        dico_info["freq"] = line[5:len(line)-1] + " Khz"
     
     if line[0:4] == "name" : 
         if len(line) >= 6 :

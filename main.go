@@ -29,6 +29,11 @@ func main() {
 	go func() {
 		<-signalChannel
 		fmt.Println("\nCtrl+C received. shutting down...")
+		cmd_kill := exec.Command("bash", "-c", "kill $(ps -e -o pid,command | grep 'InputAndScreen.py' | awk '{print $1}')")
+		cmd_kill.Run()
+
+		//kill $(ps -e -o pid,comm | grep 'InputAndScreen.py' | awk '{print $1}')
+
 		cancel() // Cancel the context when Ctrl+C is received
 		os.Exit(1)
 	}()
@@ -92,7 +97,7 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 func (i *info) run(ctx context.Context) error {
 
 	var err error
-	i.stationFreq = 105500 // 904000 // 104700 //  96000 // 87800 //
+	i.stationFreq = 90400 // 90900 //  105500 //  104700 //  96000 // 87800 //
 
 	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f %dK", i.stationFreq)
 	cmd_radio := exec.CommandContext(ctx, "bash", "-c", command_radio)
