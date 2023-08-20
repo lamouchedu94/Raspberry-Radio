@@ -67,30 +67,21 @@ def screen(dico):
 
 def button() :
     while True :
+        #print("jesuisenvie")
         if GPIO.input(15) == GPIO.HIGH :
             print("stop")
+            screenOff()
         if GPIO.input(14) == GPIO.HIGH :
-            print("freq:+100")
-            
+            #print('14')
+            time.sleep(0.2)
+            if GPIO.input(14) == GPIO.LOW :
+                print("freq:+100")   
         if GPIO.input(18) == GPIO.HIGH :
-            print("freq:-100")
+            #print("18")
+            time.sleep(0.2)
+            if GPIO.input(18) == GPIO.LOW :
+                print("freq:-100")
             
-        """
-        if GPIO.input(14) == GPIO.HIGH:
-            print("freq:+100")
-            time.sleep(.2)
-            while GPIO.input(14) == GPIO.HIGH:
-                print("freq:+100")
-                time.sleep(.04)
-                
-        if GPIO.input(18) == GPIO.HIGH:
-            print("freq:+100")
-            time.sleep(.2)
-            while GPIO.input(18) == GPIO.HIGH:
-                print("freq:+100")
-                time.sleep(.04)
-        """
-    
 
 
 
@@ -102,7 +93,6 @@ thread_screen = threading.Thread(target=screen, args=(dico_info))
 thread_button = threading.Thread(target=button)
 thread_button.start()
 for line in sys.stdin:
-    #print("ici")
     if line[0:4] == "freq" :  
         dico_info["freq"] = line[5:len(line)-1] + " Khz"
     
