@@ -29,15 +29,14 @@ func main() {
 	go func() {
 		<-signalChannel
 		fmt.Println("\nCtrl+C received. shutting down...")
-		cmd_kill := exec.Command("bash", "-c", "kill $(ps -e -o pid,command | grep 'InputAndScreen.py' | awk '{print $1}')")
-		cmd_kill.Run()
+		//cmd_kill := exec.Command("bash", "-c", "kill $(ps -e -o pid,command | grep 'InputAndScreen.py' | awk '{print $1}')")
+		//cmd_kill.Run()
 
 		//kill $(ps -e -o pid,comm | grep 'InputAndScreen.py' | awk '{print $1}')
 
 		cancel() // Cancel the context when Ctrl+C is received
 		os.Exit(1)
 	}()
-
 	err := i.run(ctx)
 	if err != nil {
 		fmt.Println(err)
@@ -88,7 +87,25 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 	// 	stdoutBuf.Reset()
 	// }()
 
-	io.Copy(os.Stdout, pipeOut)
+	go func() {
+		count := 0
+		for {
+			var s string
+			fmt.Fscan(pipeOut, &s)
+			fmt.Println(s, count)
+			if s == "freq:-100" {
+				i.stationFreq -= 100
+			} else if s == "freq:+100" {
+				i.stationFreq += 100
+			} else {
+				fmt.Println(s)
+			}
+
+			count += 1
+		}
+	}()
+
+	//io.Copy(io.Discard, pipeOut)
 
 	cmd_python.Wait()
 	return nil
@@ -97,7 +114,7 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 func (i *info) run(ctx context.Context) error {
 
 	var err error
-	i.stationFreq = 90400 // 90900 //  105500 //  104700 //  96000 // 87800 //
+	i.stationFreq = 90400 // 96000 //  90900 //  105500 //  104700 //   87800 //
 
 	command_radio := fmt.Sprintf("rtl_fm -M fm -l 0 -A std -p 0 -s 180k -g 30 -F 9 -f %dK", i.stationFreq)
 	cmd_radio := exec.CommandContext(ctx, "bash", "-c", command_radio)
@@ -107,9 +124,9 @@ func (i *info) run(ctx context.Context) error {
 
 	// cmd_RDS := exec.CommandContext(ctx, "hexdump", "-C")
 	//cmd_RDS := exec.Command("redsea")
-	cmd_RDS := exec.Command("bash", "-c", "redsea --show-partial -r 180k") // --show-partial
+	cmd_RDS := exec.CommandContext(ctx, "redsea", "--show-partial", "-r", "180k") // --show-partial
 
-	cmd_python := exec.Command("python3", "InputAndScreen.py")
+	cmd_python := exec.CommandContext(ctx, "python3", "InputAndScreen.py")
 
 	r_rds, w_rds := io.Pipe()
 	r_audio, w_audio := io.Pipe()
@@ -146,7 +163,6 @@ func (i *info) rds(cmd_RDS *exec.Cmd) {
 	err := cmd_RDS.Start()
 	fmt.Println("RDS Started:", err)
 	var msg map[string]any
-
 	// var station [8]byte
 
 	dec := json.NewDecoder(out)
