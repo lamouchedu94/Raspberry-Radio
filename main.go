@@ -92,22 +92,23 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 		old := "4"
 		//start := time.Now()
 		for {
-			var s string
 			b := make([]byte, 1)
 			pipeOut.Read(b)
 			if old != string(b) && string(b) != "\n" {
 				//Changement d'état
 				//start = time.Now()
-				fmt.Println("changement état")
-			}
-			//fmt.Fscanln(pipeOut, &s)
+				if string(b) != "4" {
+					fmt.Println("changement état", string(b))
+					if string(b) == "1" {
+						i.stationFreq += 100
+					}
+					if string(b) == "2" {
+						i.stationFreq -= 100
+					}
 
-			//fmt.Println(string(b))
-			if s == "freq:-100" {
-				i.stationFreq -= 100
-			} else if s == "freq:+100" {
-				i.stationFreq += 100
+				}
 			}
+
 			if string(b) != "\n" {
 
 				old = string(b)
