@@ -29,10 +29,10 @@ func main() {
 	go func() {
 		<-signalChannel
 		fmt.Println("\nCtrl+C received. shutting down...")
-		//cmd_kill := exec.Command("bash", "-c", "kill $(ps -e -o pid,command | grep 'InputAndScreen.py' | awk '{print $1}')")
-		//cmd_kill.Run()
+		cmd_kill := exec.Command("bash", "-c", "kill $(ps -e -o pid,command | grep 'InputAndScreen.py' | awk '{print $1}')")
+		cmd_kill.Run()
 
-		//kill $(ps -e -o pid,comm | grep 'InputAndScreen.py' | awk '{print $1}')
+		//kill $(ps -e -o pid,command | grep 'InputAndScreen.py' | awk '{print $1}')
 
 		cancel() // Cancel the context when Ctrl+C is received
 		os.Exit(1)
@@ -89,18 +89,29 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 
 	go func() {
 		count := 0
+		old := "4"
+		//start := time.Now()
 		for {
 			var s string
-			fmt.Fscan(pipeOut, &s)
-			fmt.Println(s, count)
+			b := make([]byte, 1)
+			pipeOut.Read(b)
+			if old != string(b) && string(b) != "\n" {
+				//Changement d'état
+				//start = time.Now()
+				fmt.Println("changement état")
+			}
+			//fmt.Fscanln(pipeOut, &s)
+
+			//fmt.Println(string(b))
 			if s == "freq:-100" {
 				i.stationFreq -= 100
 			} else if s == "freq:+100" {
 				i.stationFreq += 100
-			} else {
-				fmt.Println(s)
 			}
+			if string(b) != "\n" {
 
+				old = string(b)
+			}
 			count += 1
 		}
 	}()

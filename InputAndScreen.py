@@ -67,20 +67,24 @@ def screen(dico):
 
 def button() :
     while True :
-        #print("jesuisenvie")
+        #print("3")
+        stop = 0
         if GPIO.input(15) == GPIO.HIGH :
-            print("stop")
+            print("0")
+            stop += 1
             screenOff()
         if GPIO.input(14) == GPIO.HIGH :
             #print('14')
-            time.sleep(0.2)
-            if GPIO.input(14) == GPIO.LOW :
-                print("freq:+100")   
+            print("1")
+            stop +=1
+            
         if GPIO.input(18) == GPIO.HIGH :
             #print("18")
-            time.sleep(0.2)
-            if GPIO.input(18) == GPIO.LOW :
-                print("freq:-100")
+            print("2")
+            stop +=1 
+        if stop == 0 :
+            print(4)
+            
             
 
 
