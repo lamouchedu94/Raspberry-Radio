@@ -75,17 +75,16 @@ def button() :
             screenOff()
         if GPIO.input(14) == GPIO.HIGH :
             #+100
-            #print('14')
             print("1")
             stop +=1
             
         if GPIO.input(18) == GPIO.HIGH :
             #-100
-            #print("18")
             print("2")
             stop +=1 
         if stop == 0 :
-            print(4)
+            #Aucun boutton appuyé
+            print("4")
             
             
 

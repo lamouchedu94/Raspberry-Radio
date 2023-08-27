@@ -90,27 +90,39 @@ func (i *info) pythonInterface(cmd_python *exec.Cmd) error {
 	go func() {
 		count := 0
 		old := "4"
-		//start := time.Now()
+		//1 = +
+		//2 = -
+		//4 = Tous les bouttons au neutre
+
+		start := time.Now()
 		for {
 			b := make([]byte, 1)
 			pipeOut.Read(b)
-			if old != string(b) && string(b) != "\n" {
+
+			// if string(b) != "\n" {
+			// 	fmt.Println(string(b))
+			// }
+			if old != string(b) && string(b) != "\n" && string(b) != "nil" {
 				//Changement d'état
-				//start = time.Now()
+
 				if string(b) != "4" {
-					fmt.Println("changement état", string(b))
-					if string(b) == "1" {
-						i.stationFreq += 100
-					}
-					if string(b) == "2" {
-						i.stationFreq -= 100
+					end := time.Now()
+					//fmt.Println(end.Sub(start))
+					if end.Sub(start) > 50*time.Millisecond {
+						fmt.Println("changement état", string(b))
+						if string(b) == "1" {
+							i.stationFreq += 100
+						}
+						if string(b) == "2" {
+							i.stationFreq -= 100
+						}
 					}
 
 				}
 			}
 
-			if string(b) != "\n" {
-
+			if old != string(b) && string(b) != "\n" {
+				start = time.Now()
 				old = string(b)
 			}
 			count += 1
@@ -165,6 +177,7 @@ func (i *info) run(ctx context.Context) error {
 	fmt.Println("start radio", cmd_radio.Start())
 
 	fmt.Println("wait radio", cmd_radio.Wait())
+
 	return nil
 }
 
